@@ -3,61 +3,68 @@
 <head>
     <title>Get Access Key</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        body { background: #0c0d0e; color: #fff; font-family: 'Courier New', monospace; text-align: center; padding-top: 100px; }
+        .key-box { border: 2px solid #5865f2; padding: 30px; display: inline-block; border-radius: 15px; background: #151921; }
+        .hidden { display: none; }
+        .key-text { font-size: 30px; color: #39ff14; background: #000; padding: 15px; margin: 20px 0; border-radius: 8px; border: 1px dashed #5865f2; }
+    </style>
 </head>
 <body style="background: #121212; color: #39ff14; font-family: monospace; text-align: center; padding-top: 50px;">
-    <h1>ACCESS KEY</h1>
-    <div id="keyDisplay" style="font-size: 30px; border: 2px solid #39ff14; display: inline-block; padding: 20px; border-radius: 10px;">
-        WAITING...
+
+    <div id="loading">
+        <h2>ำลังตรวจสอบความปลอดภัย...</h2>
+        <p>โปรดรอสักครู่ (Verifying Ad-Step Completion)</p>
     </div>
-    <p style="color: #666;">คีย์นี้จะหมดอายุในเวลา 00:00 UTC (07:00 น. ไทย)</p>
+    
+    <div id="mainContent" class="hidden">
+        <div class="key-box">
+            <h1>ACCESS KEY</h1>
+            <div id="keyDisplay" style="font-size: 30px; border: 2px solid #39ff14; display: inline-block; padding: 20px; border-radius: 10px;">
+                WAITING...
+            </div>
+        <p style="color: #666;">คีย์นี้จะหมดอายุในเวลา 00:00 UTC (07:00 น. ไทย)</p>
+        </div>
+    </div>
+    
 
     <script>
         const SALT = "MY_PRIVATE_KEY_999";
 
-        async function showKey() {
-            const display = document.getElementById('keyDisplay');
-            let dateStr = "";
-        
-            // 1. ลองดึงจาก WorldTimeAPI (ตัวหลักของคุณ)
+        async function validateAndShow() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pcNameEncoded = urlParams.get('u'); // รับชื่อเครื่องคอม
+            const authTag = urlParams.get('auth');    // รับสถานะจาก Workink
+            const ref = document.referrer;            // ตรวจสอบเว็บต้นทาง
+
+            // --- ระบบป้องกันเว็บ BYPASS ---
+            // เว็บ Bypass ส่วนใหญ่จะไม่ส่ง Referrer มา หรือส่งมาเป็นชื่อเว็บตัวเอง
+            const isBypassed = ref === "" || (!ref.includes("work.ink") && !ref.includes("workink"));
+            
+            if (isBypassed || authTag !== "workink_done" || !pcNameEncoded) {
+                document.body.innerHTML = "<h2 style='color:red;'>❌ ERROR: BYPASS DETECTED</h2><p>กรุณาดูโฆษณาให้จบและห้ามใช้ตัวช่วยข้าม</p>";
+                return;
+            }
+
+            // แสดงหน้าจอและเจนคีย์
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('mainContent').classList.remove('hidden');
+
             try {
+                const pcName = atob(pcNameEncoded); // แปลง Base64 กลับเป็นชื่อเครื่อง
                 const res = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
                 const data = await res.json();
-                dateStr = data.datetime.slice(0, 10);
-            } catch (e) {
-                console.log("WorldTimeAPI ล่ม... กำลังใช้ตัวสำรอง");
+                const dateStr = data.datetime.slice(0, 10);
                 
-                // 2. ถ้าตัวแรกล่ม ให้ลองดึงจาก TimeAPI.io (ตัวสำรองที่เสถียรกว่า)
-                try {
-                    const res = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=UTC');
-                    const data = await res.json();
-                    dateStr = data.dateTime.slice(0, 10);
-                } catch (e2) {
-                    // 3. ถ้าล่มหมดจริงๆ ให้ใช้เวลาจากเครื่องผู้ใช้ (ป้องกันหน้าจอค้าง)
-                    const now = new Date();
-                    dateStr = now.toISOString().slice(0, 10);
-                }
-            }
-        
-            // คำนวณคีย์จากวันที่ได้มา
-            if (dateStr) {
-                const hash = CryptoJS.SHA256(dateStr + SALT).toString().toUpperCase();
-                display.innerText = "PRO-" + hash.substring(0, 8);
+                // คำนวณคีย์โดยใช้ (วันที่ + ชื่อเครื่อง + Salt)
+                const hash = CryptoJS.SHA256(dateStr + pcName + SALT).toString().toUpperCase();
+                document.getElementById('keyDisplay').innerText = "PRO-" + hash.substring(0, 8);
+            } catch (e) {
+                document.getElementById('keyDisplay').innerText = "ERROR";
             }
         }
 
-        function validateAccess() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const authTag = urlParams.get('auth'); 
-            
-            if (authTag !== "workink_done") {
-                alert("กรุณาดูโฆษณาให้ครบถ้วนก่อนรับคีย์!");
-                window.location.href = "https://link-hub.net/4226895/xQtvoU3bvjOk";
-            } else {
-                showKey(); 
-            }
-        }
-
-        validateAccess();
+        validateAndShow();
     </script>
 </body>
 </html>
