@@ -16,17 +16,16 @@
 
         async function showKey() {
             try {
+                // ใช้เวลา UTC เพื่อให้คีย์ตรงกับในโปรแกรม 100%
                 const res = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
                 const data = await res.json();
                 const dateStr = data.datetime.slice(0, 10);
                 
-                // สร้างคีย์ด้วยวิธีเดียวกับโปรแกรม
                 const hash = CryptoJS.SHA256(dateStr + SALT).toString().toUpperCase();
-                const finalKey = "PRO-" + hash.substring(0, 8);
-                
-                document.getElementById('keyDisplay').innerText = finalKey;
+                document.getElementById('keyDisplay').innerText = "PRO-" + hash.substring(0, 8);
             } catch (e) {
-                document.getElementById('keyDisplay').innerText = "ERROR: CONNECT INTERNET";
+                // ถ้าดึงเวลาไม่ได้ ให้แจ้งผู้ใช้ให้รีเฟรชหน้าจอ
+                document.getElementById('keyDisplay').innerText = "โปรดรีเฟรชหน้าจอ (Network Error)";
             }
         }
         showKey();
