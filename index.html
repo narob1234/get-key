@@ -1,38 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Get Daily Key</title>
+    <title>Get Access Key</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 <body style="background: #121212; color: #39ff14; font-family: monospace; text-align: center; padding-top: 50px;">
-    <h1>YOUR DAILY LICENSE KEY</h1>
+    <h1>ACCESS KEY</h1>
     <div id="keyDisplay" style="font-size: 30px; border: 2px solid #39ff14; display: inline-block; padding: 20px; border-radius: 10px;">
-        GENERATING...
+        WAITING...
     </div>
-    <p style="color: #666;">คีย์นี้จะหมดอายุในเวลา 00:00 UTC</p>
+    <p style="color: #666;">คีย์นี้จะหมดอายุในเวลา 00:00 UTC (07:00 น. ไทย)</p>
 
     <script>
-        const SALT = "MY_PRIVATE_KEY_999"; // *** ต้องตรงกับในโปรแกรม ***
+        const SALT = "MY_PRIVATE_KEY_999"; // *** ต้องตรงกับใน main.js ***
 
-        function validateAccess() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const authTag = urlParams.get('auth'); // ดึงค่าจาก ?auth=...
-            
-            // ถ้าไม่มีคำว่า workink_done ในลิ้งก์ ให้เด้งกลับไปด่านที่ 1 (Linkvertise)
-            if (authTag !== "workink_done") {
-                alert("กรุณาดูโฆษณาให้ครบถ้วนก่อนรับคีย์!");
-                window.location.href = "https://link-hub.net/4226895/xQtvoU3bvjOk"; // ใส่ลิ้งก์ Linkvertise ของคุณ
-            } else {
-                // ถ้าผ่าน ให้รันฟังก์ชันเจนคีย์ตามปกติ
-                generateDailyKey(); 
-            }
-        }
-
-        validateAccess();
-
+        // ฟังก์ชันแสดงคีย์
         async function showKey() {
             try {
-                // ใช้เวลา UTC เพื่อให้คีย์ตรงกับในโปรแกรม 100%
                 const res = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
                 const data = await res.json();
                 const dateStr = data.datetime.slice(0, 10);
@@ -40,11 +24,26 @@
                 const hash = CryptoJS.SHA256(dateStr + SALT).toString().toUpperCase();
                 document.getElementById('keyDisplay').innerText = "PRO-" + hash.substring(0, 8);
             } catch (e) {
-                // ถ้าดึงเวลาไม่ได้ ให้แจ้งผู้ใช้ให้รีเฟรชหน้าจอ
                 document.getElementById('keyDisplay').innerText = "โปรดรีเฟรชหน้าจอ (Network Error)";
             }
         }
-        showKey();
+
+        // ฟังก์ชันตรวจสอบการผ่านโฆษณา
+        function validateAccess() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const authTag = urlParams.get('auth'); 
+            
+            if (authTag !== "workink_done") {
+                alert("กรุณาดูโฆษณาให้ครบถ้วนก่อนรับคีย์!");
+                window.location.href = "https://link-hub.net/4226895/xQtvoU3bvjOk"; // ลิงก์ Linkvertise ด่าน 1
+            } else {
+                // ถ้าผ่านเงื่อนไข ให้เริ่มดึงเวลาและแสดงคีย์
+                showKey(); 
+            }
+        }
+
+        // รันการตรวจสอบทันทีที่โหลดหน้า
+        validateAccess();
     </script>
 </body>
 </html>
