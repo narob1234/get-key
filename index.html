@@ -34,8 +34,22 @@
         async function validateAndShow() {
             const urlParams = new URLSearchParams(window.location.search);
             const pcNameEncoded = urlParams.get('u'); 
-            const authTag = urlParams.get('auth');    
+            const authTag = urlParams.get('auth');
+            const sToken = urlParams.get('s');
             const ref = document.referrer;            
+
+            const now = new Date();
+            const timeKey = now.toISOString().slice(0, 15);
+            const correctToken = CryptoJS.MD5(timeKey + SALT).toString().substring(0, 6);
+
+            const isAuthorized = authTag === "workink_done" && 
+                         sToken === correctToken && 
+                         (ref.includes("work.ink") || ref.includes("workink"));
+        
+            if (!isAuthorized) {
+                document.body.innerHTML = "<h2 style='color:red;'>❌ INVALID SESSION</h2><p>กรุณาเริ่มดูโฆษณาใหม่ (รหัสรับคีย์หมดอายุหรือถูก Bypass)</p>";
+                return;
+            }
     
             // --- ระบบป้องกันเว็บ BYPASS (เข้มงวด) ---
             // ถ้าเข้าตรงๆ หรือไม่ได้มาจากด่าน Workink ให้เด้งออก
