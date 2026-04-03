@@ -1,1 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Get Daily Key</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body style="background: #121212; color: #39ff14; font-family: monospace; text-align: center; padding-top: 50px;">
+    <h1>YOUR DAILY LICENSE KEY</h1>
+    <div id="keyDisplay" style="font-size: 30px; border: 2px solid #39ff14; display: inline-block; padding: 20px; border-radius: 10px;">
+        GENERATING...
+    </div>
+    <p style="color: #666;">คีย์นี้จะหมดอายุในเวลา 00:00 UTC</p>
 
+    <script>
+        const SALT = "MY_PRIVATE_KEY_999"; // *** ต้องตรงกับในโปรแกรม ***
+
+        async function showKey() {
+            try {
+                const res = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
+                const data = await res.json();
+                const dateStr = data.datetime.slice(0, 10);
+                
+                // สร้างคีย์ด้วยวิธีเดียวกับโปรแกรม
+                const hash = CryptoJS.SHA256(dateStr + SALT).toString().toUpperCase();
+                const finalKey = "PRO-" + hash.substring(0, 8);
+                
+                document.getElementById('keyDisplay').innerText = finalKey;
+            } catch (e) {
+                document.getElementById('keyDisplay').innerText = "ERROR: CONNECT INTERNET";
+            }
+        }
+        showKey();
+    </script>
+</body>
+</html>
