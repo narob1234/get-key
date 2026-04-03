@@ -33,34 +33,34 @@
 
         async function validateAndShow() {
             const urlParams = new URLSearchParams(window.location.search);
-            const pcNameEncoded = urlParams.get('u'); // รับชื่อเครื่องคอม
-            const authTag = urlParams.get('auth');    // รับสถานะจาก Workink
-            const ref = document.referrer;            // ตรวจสอบเว็บต้นทาง
-
-            // --- ระบบป้องกันเว็บ BYPASS ---
-            // เว็บ Bypass ส่วนใหญ่จะไม่ส่ง Referrer มา หรือส่งมาเป็นชื่อเว็บตัวเอง
-            const isBypassed = ref === "" || (!ref.includes("work.ink") && !ref.includes("workink"));
+            const pcNameEncoded = urlParams.get('u'); 
+            const authTag = urlParams.get('auth');    
+            const ref = document.referrer;            
+    
+            // --- ระบบป้องกันเว็บ BYPASS (เข้มงวด) ---
+            // ถ้าเข้าตรงๆ หรือไม่ได้มาจากด่าน Workink ให้เด้งออก
+            const isFromWorkink = ref.includes("work.ink") || ref.includes("workink") || authTag === "workink_done";
             
-            if (isBypassed || authTag !== "workink_done" || !pcNameEncoded) {
-                document.body.innerHTML = "<h2 style='color:red;'>❌ ERROR: BYPASS DETECTED</h2><p>กรุณาดูโฆษณาให้จบและห้ามใช้ตัวช่วยข้าม</p>";
+            if (!isFromWorkink || !pcNameEncoded) {
+                document.body.innerHTML = "<h2 style='color:red; padding-top:100px;'>❌ ERROR: ACCESS DENIED</h2><p>กรุณาผ่านโฆษณาตามขั้นตอนให้ครบถ้วน</p>";
                 return;
             }
-
-            // แสดงหน้าจอและเจนคีย์
+    
+            // แสดงหน้าจอ
             document.getElementById('loading').classList.add('hidden');
             document.getElementById('mainContent').classList.remove('hidden');
-
+    
             try {
-                const pcName = atob(pcNameEncoded); // แปลง Base64 กลับเป็นชื่อเครื่อง
+                const pcName = atob(pcNameEncoded); // ถอดรหัสชื่อเครื่อง
                 const res = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
                 const data = await res.json();
                 const dateStr = data.datetime.slice(0, 10);
                 
-                // คำนวณคีย์โดยใช้ (วันที่ + ชื่อเครื่อง + Salt)
+                // คำนวณคีย์: SHA256(วันที่ + ชื่อเครื่อง + Salt)
                 const hash = CryptoJS.SHA256(dateStr + pcName + SALT).toString().toUpperCase();
                 document.getElementById('keyDisplay').innerText = "PRO-" + hash.substring(0, 8);
             } catch (e) {
-                document.getElementById('keyDisplay').innerText = "ERROR";
+                document.getElementById('keyDisplay').innerText = "ERROR: NETWORK";
             }
         }
 
