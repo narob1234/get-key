@@ -12,37 +12,59 @@
     <p style="color: #666;">คีย์นี้จะหมดอายุในเวลา 00:00 UTC (07:00 น. ไทย)</p>
 
     <script>
-        const SALT = "MY_PRIVATE_KEY_999"; // *** ต้องตรงกับใน main.js ***
+        const SALT = "MY_PRIVATE_KEY_999";
 
-        // ฟังก์ชันแสดงคีย์
         async function showKey() {
+            const display = document.getElementById('keyDisplay');
+            
+            const timeAPIs = [
+                'https://worldtimeapi.org/api/timezone/Etc/UTC',
+                'https://timeapi.io/api/Time/current/zone?timeZone=UTC',
+                'https://worldclockapi.com/api/json/utc/now'
+            ];
+
+            let dateStr = "";
+
+            for (let url of timeAPIs) {
+                try {
+                    const res = await fetch(url, { method: 'GET', timeout: 5000 });
+                    const data = await res.json();
+                    
+                    if (data.datetime) dateStr = data.datetime.slice(0, 10);
+                    else if (data.dateTime) dateStr = data.dateTime.slice(0, 10);
+                    else if (data.currentDateTime) dateStr = data.currentDateTime.slice(0, 10);
+                    
+                    if (dateStr) break;
+                } catch (e) {
+                    console.warn(`Failed to fetch from ${url}, trying next...`);
+                }
+            }
+
+            if (!dateStr) {
+                console.error("All APIs failed. Using local system time.");
+                dateStr = new Date().toISOString().slice(0, 10);
+            }
+
             try {
-                const res = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
-                const data = await res.json();
-                const dateStr = data.datetime.slice(0, 10);
-                
                 const hash = CryptoJS.SHA256(dateStr + SALT).toString().toUpperCase();
-                document.getElementById('keyDisplay').innerText = "PRO-" + hash.substring(0, 8);
+                display.innerText = "PRO-" + hash.substring(0, 8);
             } catch (e) {
-                document.getElementById('keyDisplay').innerText = "โปรดรีเฟรชหน้าจอ (Network Error)";
+                display.innerText = "Error generating key.";
             }
         }
 
-        // ฟังก์ชันตรวจสอบการผ่านโฆษณา
         function validateAccess() {
             const urlParams = new URLSearchParams(window.location.search);
             const authTag = urlParams.get('auth'); 
             
             if (authTag !== "workink_done") {
                 alert("กรุณาดูโฆษณาให้ครบถ้วนก่อนรับคีย์!");
-                window.location.href = "https://link-hub.net/4226895/xQtvoU3bvjOk"; // ลิงก์ Linkvertise ด่าน 1
+                window.location.href = "https://link-hub.net/4226895/xQtvoU3bvjOk";
             } else {
-                // ถ้าผ่านเงื่อนไข ให้เริ่มดึงเวลาและแสดงคีย์
                 showKey(); 
             }
         }
 
-        // รันการตรวจสอบทันทีที่โหลดหน้า
         validateAccess();
     </script>
 </body>
