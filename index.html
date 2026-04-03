@@ -14,6 +14,20 @@
     <script>
         const SALT = "MY_PRIVATE_KEY_999"; // *** ต้องตรงกับในโปรแกรม ***
 
+        function validateAccess() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const authTag = urlParams.get('auth'); // ดึงค่าจาก ?auth=...
+            
+            // ถ้าไม่มีคำว่า workink_done ในลิ้งก์ ให้เด้งกลับไปด่านที่ 1 (Linkvertise)
+            if (authTag !== "workink_done") {
+                alert("กรุณาดูโฆษณาให้ครบถ้วนก่อนรับคีย์!");
+                window.location.href = "https://link-hub.net/4226895/xQtvoU3bvjOk"; // ใส่ลิ้งก์ Linkvertise ของคุณ
+            } else {
+                // ถ้าผ่าน ให้รันฟังก์ชันเจนคีย์ตามปกติ
+                generateDailyKey(); 
+            }
+        }
+
         async function showKey() {
             try {
                 // ใช้เวลา UTC เพื่อให้คีย์ตรงกับในโปรแกรม 100%
