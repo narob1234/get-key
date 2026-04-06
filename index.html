@@ -29,7 +29,7 @@
     
 
     <script>
-        const SALT = "MY_PRIVATE_KEY_999";
+        const SALT = "MY_PRIVATE_KEY_SALT_9545_iTzFiNzAZz";
 
         async function validateAndShow() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -65,16 +65,16 @@
             document.getElementById('mainContent').classList.remove('hidden');
     
             try {
-                const pcName = atob(pcNameEncoded); // ถอดรหัสชื่อเครื่อง
+                const pcName = atob(pcNameEncoded);
                 const res = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
                 const data = await res.json();
                 const dateStr = data.datetime.slice(0, 10);
                 
-                // คำนวณคีย์: SHA256(วันที่ + ชื่อเครื่อง + Salt)
-                const hash = CryptoJS.SHA256(dateStr + pcName + SALT).toString().toUpperCase();
-                document.getElementById('keyDisplay').innerText = "PRO-" + hash.substring(0, 8);
+                const hash = CryptoJS.SHA256(dateStr + pcName + projectID + SALT).toString().toUpperCase();
+                document.getElementById('keyDisplay').innerText = "KEY-" + hash.substring(0, 10);
+                document.getElementById('appNameDisplay').innerText = "Project: " + projectID;
             } catch (e) {
-                document.getElementById('keyDisplay').innerText = "ERROR: NETWORK";
+                document.getElementById('keyDisplay').innerText = "ERROR";
             }
         }
 
