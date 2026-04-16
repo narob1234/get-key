@@ -2,37 +2,44 @@
 <html>
 <head>
     <title>Verifying Access...</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 <body style="background:#0b0e14; color:white; text-align:center; padding-top:50px; font-family:sans-serif;">
-    <div id="msg"><h2>กำลังตรวจสอบความปลอดภัย...</h2></div>
+    <div id="msg"><h2>正在验证安全性... (Checking Security)</h2></div>
 
     <script>
-        const SALT = "MY_PRIVATE_KEY_SALT_9545_iTzFiNzAZz"; // ต้องตรงกับในโปรแกรม
+        const CLOUD_URL = "https://discordappcal.napafin.workers.dev"; // URL Worker ของคุณ
 
-        function checkBypass() {
+        async function checkBypass() {
             const urlParams = new URLSearchParams(window.location.search);
-            const sToken = urlParams.get('s'); // รับรหัสลับชั่วคราว
+            const sToken = urlParams.get('s');
             const pcName = urlParams.get('u');
-            const ref = document.referrer; // ตรวจสอบเว็บต้นทาง
+            const appId = urlParams.get('p');
+            const ref = document.referrer;
 
-            // 1. ตรวจสอบ Referrer (ถ้ามาจากเว็บ Bypass ส่วนใหญ่จะไม่มี Referrer)
+            // 1. ตรวจสอบต้นทาง (Referrer) เบื้องต้น
             const isFromLinkvertise = ref.includes("linkvertise.com") || ref.includes("link-hub.net");
-            
-            // 2. ตรวจสอบรหัสลับชั่วคราว (ถ้านั่งแช่หน้า Linkvertise นานเกินไป หรือข้ามมาตรงๆ รหัสจะไม่ตรง)
-            const now = new Date();
-            const timeKey = now.toISOString().slice(0, 15);
-            const correctToken = CryptoJS.MD5(timeKey + SALT).toString().substring(0, 6);
 
-            if (!isFromLinkvertise || sToken !== correctToken) {
-                document.body.innerHTML = "<h2 style='color:red;'>❌ BYPASS DETECTED</h2><p>กรุณาดูโฆษณาตามขั้นตอนปกติ (ห้ามเปิดหน้าทิ้งไว้นานเกินไป)</p>";
+            if (!isFromLinkvertise || !sToken) {
+                document.body.innerHTML = "<h2 style='color:red;'>❌ BYPASS DETECTED</h2><p>กรุณาเข้าผ่านลิงก์โฆษณาปกติ</p>";
                 return;
             }
 
-            // ถ้าผ่าน ให้ไปด่าน Workink (อย่าลืมส่งพารามิเตอร์ต่อ)
-            setTimeout(() => {
-                window.location.href = `https://work.ink/2n0G/get-your-key?u=${pcName}&s=${sToken}`;
-            }, 2000);
+            try {
+                // 2. ส่งรหัสไปเช็คความถูกต้องที่ Cloud
+                const res = await fetch(`${CLOUD_URL}/check-session?s=${sToken}`);
+                const data = await res.json();
+
+                if (data.valid) {
+                    // ถ้าผ่าน ให้ไปด่าน Workink (ส่งพารามิเตอร์ทั้งหมดต่อไปด้วย)
+                    setTimeout(() => {
+                        window.location.href = `https://work.ink/2n0G/get-your-key?u=${pcName}&s=${sToken}&p=${appId}`;
+                    }, 1500);
+                } else {
+                    document.body.innerHTML = "<h2 style='color:red;'>❌ SESSION EXPIRED</h2><p>รหัสหมดอายุหรือผิดพลาด กรุณาเริ่มใหม่จากโปรแกรม</p>";
+                }
+            } catch (e) {
+                document.body.innerHTML = "<h2>ERROR: Cloud Server Down</h2>";
+            }
         }
 
         checkBypass();
