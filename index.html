@@ -1,84 +1,55 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Get Access Key</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <title>Secure Key Generator</title>
     <style>
-        body { background: #0c0d0e; color: #fff; font-family: 'Courier New', monospace; text-align: center; padding-top: 100px; }
+        body { background: #0c0d0e; color: #fff; font-family: sans-serif; text-align: center; padding-top: 100px; }
         .key-box { border: 2px solid #5865f2; padding: 30px; display: inline-block; border-radius: 15px; background: #151921; }
+        .key-text { font-size: 30px; color: #39ff14; background: #000; padding: 15px; margin: 20px 0; border: 1px dashed #5865f2; }
         .hidden { display: none; }
-        .key-text { font-size: 30px; color: #39ff14; background: #000; padding: 15px; margin: 20px 0; border-radius: 8px; border: 1px dashed #5865f2; }
     </style>
 </head>
-<body style="background: #121212; color: #39ff14; font-family: monospace; text-align: center; padding-top: 50px;">
+<body>
+    <div id="loading"><h2>กำลังตรวจสอบความปลอดภัย...</h2></div>
 
-    <div id="loading">
-        <h2>ำลังตรวจสอบความปลอดภัย...</h2>
-        <p>โปรดรอสักครู่ (Verifying Ad-Step Completion)</p>
-    </div>
-    
     <div id="mainContent" class="hidden">
         <div class="key-box">
-            <h1>ACCESS KEY</h1>
-            <div id="keyDisplay" style="font-size: 30px; border: 2px solid #39ff14; display: inline-block; padding: 20px; border-radius: 10px;">
-                WAITING...
-            </div>
-        <p style="color: #666;">คีย์นี้จะหมดอายุในเวลา 00:00 UTC (07:00 น. ไทย)</p>
+            <h1>LICENSE UNLOCKED</h1>
+            <p id="appTitle">Project Loading...</p>
+            <div class="key-text" id="keyDisplay">GENERATING...</div>
+            <p style="font-size: 11px; color: #626a73;">*คีย์ล็อก HWID ใช้งานได้เฉพาะเครื่องของคุณเท่านั้น*</p>
         </div>
     </div>
-    
 
     <script>
-        const SALT = "MY_PRIVATE_KEY_SALT_9545_iTzFiNzAZz";
+        const CLOUD_URL = "https://discordappcal.napafin.workers.dev";
 
-        async function validateAndShow() {
+        async function init() {
             const urlParams = new URLSearchParams(window.location.search);
-            const pcNameEncoded = urlParams.get('u'); 
-            const authTag = urlParams.get('auth');
-            const sToken = urlParams.get('s');
-            const ref = document.referrer;            
+            const u = urlParams.get('u');
+            const p = urlParams.get('p');
+            const auth = urlParams.get('auth');
+            const ref = document.referrer;
 
-            const now = new Date();
-            const timeKey = now.toISOString().slice(0, 15);
-            const correctToken = CryptoJS.MD5(timeKey + SALT).toString().substring(0, 6);
-
-            const isAuthorized = authTag === "workink_done" && 
-                         sToken === correctToken && 
-                         (ref.includes("work.ink") || ref.includes("workink"));
-        
-            if (!isAuthorized) {
-                document.body.innerHTML = "<h2 style='color:red;'>❌ INVALID SESSION</h2><p>กรุณาเริ่มดูโฆษณาใหม่ (รหัสรับคีย์หมดอายุหรือถูก Bypass)</p>";
+            const isFromWorkink = ref.includes("work.ink") || ref.includes("workink") || auth === "workink_done";
+            if (!isFromWorkink || !u || !p) {
+                document.body.innerHTML = "<h2 style='color:red;'>❌ ACCESS DENIED: Please complete Ads</h2>";
                 return;
             }
-    
-            // --- ระบบป้องกันเว็บ BYPASS (เข้มงวด) ---
-            // ถ้าเข้าตรงๆ หรือไม่ได้มาจากด่าน Workink ให้เด้งออก
-            const isFromWorkink = ref.includes("work.ink") || ref.includes("workink") || authTag === "workink_done";
-            
-            if (!isFromWorkink || !pcNameEncoded) {
-                document.body.innerHTML = "<h2 style='color:red; padding-top:100px;'>❌ ERROR: ACCESS DENIED</h2><p>กรุณาผ่านโฆษณาตามขั้นตอนให้ครบถ้วน</p>";
-                return;
-            }
-    
-            // แสดงหน้าจอ
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('mainContent').classList.remove('hidden');
-    
+
             try {
-                const pcName = atob(pcNameEncoded);
-                const res = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
+                const res = await fetch(`${CLOUD_URL}/get-daily-key?u=${u}&p=${p}`);
                 const data = await res.json();
-                const dateStr = data.datetime.slice(0, 10);
                 
-                const hash = CryptoJS.SHA256(dateStr + pcName + projectID + SALT).toString().toUpperCase();
-                document.getElementById('keyDisplay').innerText = "KEY-" + hash.substring(0, 10);
-                document.getElementById('appNameDisplay').innerText = "Project: " + projectID;
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+                document.getElementById('keyDisplay').innerText = data.key;
+                document.getElementById('appTitle').innerText = "Project: " + p;
             } catch (e) {
-                document.getElementById('keyDisplay').innerText = "ERROR";
+                document.getElementById('keyDisplay').innerText = "ERROR: SERVER DOWN";
             }
         }
-
-        validateAndShow();
+        init();
     </script>
 </body>
 </html>
